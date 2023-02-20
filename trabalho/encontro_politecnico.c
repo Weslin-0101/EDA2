@@ -95,11 +95,12 @@ int main()
         move(&posPA, dirPA);
         move(&posPB, dirPB);
 
-        // if (outOfBounds(posPA, n, m) && outOfBounds(posPB, n, m))
-        // {
-        //     outPA = outPB = step;
-        //     break;
-        // }
+        if (outOfBounds(posPA, n, m) && outOfBounds(posPB, n, m))
+        {
+            outPA = outPB = step;
+            break;
+        }
+
         if (outOfBounds(posPA, n, m))
         {
             outPA = step;
