@@ -2,77 +2,107 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define MAX_STR_SIZE 100
+#define MAX_SIZE 100
 
 typedef struct Node
 {
-    char str[MAX_STR_SIZE + 1];
+    char *content;
     struct Node *prev;
     struct Node *next;
 } Node;
 
-Node *head = NULL;
-Node *tail = NULL;
+typedef struct
+{
+    Node *head;
+    Node *tail;
+} List;
 
-void push_back(char *str)
+void init(List *list)
+{
+    list->head = NULL;
+    list->tail = NULL;
+}
+
+void destroy(List *list)
+{
+    Node *curr = list->head;
+    while (curr != NULL)
+    {
+        Node *temp = curr;
+        curr = curr->next;
+        free(temp->content);
+        free(temp);
+    }
+    list->head = NULL;
+    list->tail = NULL;
+}
+
+Node *create_node(char *content)
 {
     Node *node = (Node *)malloc(sizeof(Node));
-    strncpy(node->str, str, MAX_STR_SIZE);
-    node->prev = tail;
+    node->content = (char *)malloc(strlen(content) + 1);
+    strcpy(node->content, content);
+    node->prev = NULL;
     node->next = NULL;
+    return node;
+}
 
-    if (tail == NULL)
+void insert(List *list, char *content)
+{
+    Node *node = create_node(content);
+    if (list->head == NULL)
     {
-        head = tail = node;
+        list->head = node;
+        list->tail = node;
     }
     else
     {
-        tail->next = node;
-        tail = node;
+        list->tail->next = node;
+        node->prev = list->tail;
+        list->tail = node;
     }
 }
 
-char *pop_back()
+char *undo(List *list)
 {
-    if (tail == NULL)
+    if (list->tail == NULL)
     {
         return "NULL";
     }
-
-    Node *node = tail;
-    tail = tail->prev;
-
-    if (tail == NULL)
+    Node *node = list->tail;
+    list->tail = node->prev;
+    if (list->tail != NULL)
     {
-        head = NULL;
+        list->tail->next = NULL;
     }
     else
     {
-        tail->next = NULL;
+        list->head = NULL;
     }
-
-    char *str = node->str;
+    char *content = node->content;
     free(node);
-    return str;
+    return content;
 }
 
 int main()
 {
-    char str[MAX_STR_SIZE + 1];
-    char command[MAX_STR_SIZE + 1];
-
-    while (scanf("%s", command) != EOF)
+    List list;
+    init(&list);
+    char buffer[MAX_SIZE + 8]; // +8 para considerar "inserir " ou "desfazer"
+    while (fgets(buffer, sizeof(buffer), stdin) != NULL)
     {
-        if (strcmp(command, "inserir") == 0)
+        if (strncmp(buffer, "inserir ", 8) == 0)
         {
-            scanf("%s", str);
-            push_back(str);
+            char *content = buffer + 8;
+            content[strcspn(content, "\n")] = '\0'; // remove o caractere de nova linha
+            insert(&list, content);
         }
-        else if (strcmp(command, "desfazer") == 0)
+        else if (strcmp(buffer, "desfazer\n") == 0)
         {
-            printf("%s\n", pop_back());
+            char *content = undo(&list);
+            printf("%s\n", content);
         }
     }
-
+    destroy(&list);
     return 0;
 }
